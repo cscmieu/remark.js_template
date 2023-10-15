@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>IPS-DEV</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" type="text/css" href="core/fonts/mono.css"> 
+    <link rel="stylesheet" type="text/css" href="core/css/animate.css"> 
+    <link rel="stylesheet" type="text/css" href="core/css/cinescript.css"> 
+    <link rel="stylesheet" type="text/css" href="core/css/style_core.css"> 
+    <link rel="stylesheet" type="text/css" href="core/css/mermaid.css"> 
+    <link rel="stylesheet" type="text/css" href="core/css/gitgraph.css"> 
+    <link rel="stylesheet" type="text/css" href="core/css/style_ensiie.css"> 
+    <link rel="stylesheet" type="text/css" href="core/css/katex.css"> 
+  </head>
+  <body>
+    <textarea id="source" readonly>
+
+layout: true
+class: animated fadeIn middle numbers
+
+.footnote[
+`IPS-DEV` - N. Dubray - ENSIIE - 2023 - [:book:](../index.html)
+]
+
+---
+
+# Zen of `C++`
+
+.hcenter.shadow.w60[![](images/zen.jpg)]
+
+.hcenter[How to organize your `C++` mess...]
+
+---
+
+class:top
+
+# `C++` files: main rules
+
+## One class = two files
+
+* Class `Solver` in files `solver.cpp` and `solver.h`
+* Class `Boat` in files `boat.cpp` and `boat.h`
+
+--
+
+## One namespace = two files
+
+* Namespace `Tools` in files `tools.cpp` and `tools.h`
+* Namespace `Global` in files `global.cpp` and `global.h`
+
+--
+
+## One static library [+ one main file]
+
+* All classes and namespaces in `mylib.a`
+* If needed, main program in `main.cpp` (no `main.h` file)
+
+--
+
+## One library = one directory
+
+* For multi-libraries projects, separate the libraries
+
+--
+
+## One static library = one set of bindings
+
+* Generate bindings for some classes (maybe not all of them)
+* Generate bindings for some methods (maybe not all of them)
+
+--
+
+## One method = one unit test
+
+* Write a unit test for every single method
+
+---
+
+
+# `C++` headers: main rules
+
+.row[
+.column.w55.middle[
+## Rules
+
+* same methods in `%.h` and `%.cpp`
+* one class per `%.h` file
+* `%.h` **first included file** in `%.cpp`
+* no `everything.h` header
+* use `#define` guards
+* separate public and private headers
+* default values belong to `%.h`
+* no argument names in `%.h` (except defaults)
+* **no forward-declarations** (if possible)
+]
+.column.w40[
+## .hcenter[`myclass.h`]
+```C++
+#ifndef MYCLASS_H
+#define MYCLASS_H
+
+#include <iostream>
+
+class MyClass
+{
+  public:
+  MyClass(int, int);
+
+  int myFunc(double e = -1.0);
+};
+
+#endif // MYCLASS_H
+```
+
+## .hcenter[`myclass.cpp`]
+```C++
+#include "myclass.h"
+
+MyClass::MyClass(int a, int b)
+{
+  ...
+}
+
+int MyClass::myFunc(double e)
+{
+  ...
+}
+```
+]
+]
+
+---
+
+# `C++` headers: main rules
+
+.row[
+.column.w55.middle[
+## Rules
+
+* same methods in `%.h` and `%.cpp` :arrow_left:
+* one class per `%.h` file
+* `%.h` **first included file** in `%.cpp`
+* no `everything.h` header
+* use `#define` guards
+* separate public and private headers
+* default values belong to `%.h`
+* no argument names in `%.h` (except defaults)
+* **no forward-declarations** (if possible)
+]
+.column.w40[
+## .hcenter[`myclass.h`]
+```C++
+#ifndef MYCLASS_H
+#define MYCLASS_H
+
+#include <iostream>
+
+class MyClass
+{
+  public:
+* MyClass(int, int);
+
+* int myFunc(double e = -1.0);
+};
+
+#endif // MYCLASS_H
+```
+
+## .hcenter[`myclass.cpp`]
+```C++
+#include "myclass.h"
+
+*MyClass::MyClass(int a, int b)
+{
+  ...
+}
+
+*int MyClass::myFunc(double e)
+{
+  ...
+}
+```
+]
+]
+
+---
+
+# `C++` headers: main rules
+
+.row[
+.column.w55.middle[
+## Rules
+
+* same methods in `%.h` and `%.cpp`
+* one class per `%.h` file :arrow_left:
+* `%.h` **first included file** in `%.cpp`
+* no `everything.h` header
+* use `#define` guards
+* separate public and private headers
+* default values belong to `%.h`
+* no argument names in `%.h` (except defaults)
+* **no forward-declarations** (if possible)
+]
+.column.w40[
+## .hcenter[`myclass.h`]
+```C++
+#ifndef MYCLASS_H
+#define MYCLASS_H
+
+#include <iostream>
+
+*class MyClass
+{
+  public:
+  MyClass(int, int);
+
+  int myFunc(double e = -1.0);
+};
+
+#endif // MYCLASS_H
+```
+
+## .hcenter[`myclass.cpp`]
+```C++
+#include "myclass.h"
+
+MyClass::MyClass(int a, int b)
+{
+  ...
+}
+
+int MyClass::myFunc(double e)
+{
+  ...
+}
+```
+]
+]
+
+---
+
+# `C++` headers: main rules
+
+.row[
+.column.w55.middle[
+## Rules
+
+* same methods in `%.h` and `%.cpp`
+* one class per `%.h` file
+* `%.h` **first included file** in `%.cpp` :arrow_left:
+* no `everything.h` header
+* use `#define` guards
+* separate public and private headers
+* default values belong to `%.h`
+* no argument names in `%.h` (except defaults)
+* **no forward-declarations** (if possible)
+]
+.column.w40[
+## .hcenter[`myclass.h`]
+```C++
+#ifndef MYCLASS_H
+#define MYCLASS_H
+
+#include <iostream>
+
+class MyClass
+{
+  public:
+  MyClass(int, int);
+
+  int myFunc(double e = -1.0);
+};
+
+#endif // MYCLASS_H
+```
+
+## .hcenter[`myclass.cpp`]
+```C++
+*#include "myclass.h"
+
+MyClass::MyClass(int a, int b)
+{
+  ...
+}
+
+int MyClass::myFunc(double e)
+{
+  ...
+}
+```
+]
+]
+
+---
+
+# `C++` headers: main rules
+
+.row[
+.column.w55.middle[
+## Rules
+
+* same methods in `%.h` and `%.cpp`
+* one class per `%.h` file
+* `%.h` **first included file** in `%.cpp`
+* no `everything.h` header :arrow_left:
+* use `#define` guards
+* separate public and private headers
+* default values belong to `%.h`
+* no argument names in `%.h` (except defaults)
+* **no forward-declarations** (if possible)
+]
+.column.w40[
+## .hcenter[`myclass.h`]
+```C++
+#ifndef MYCLASS_H
+#define MYCLASS_H
+
+#include <iostream>
+
+class MyClass
+{
+  public:
+  MyClass(int, int);
+
+  int myFunc(double e = -1.0);
+};
+
+#endif // MYCLASS_H
+```
+
+## .hcenter[`myclass.cpp`]
+```C++
+#include "myclass.h"
+
+MyClass::MyClass(int a, int b)
+{
+  ...
+}
+
+int MyClass::myFunc(double e)
+{
+  ...
+}
+```
+]
+]
+
+---
+
+# `C++` headers: main rules
+
+.row[
+.column.w55.middle[
+## Rules
+
+* same methods in `%.h` and `%.cpp`
+* one class per `%.h` file
+* `%.h` **first included file** in `%.cpp`
+* no `everything.h` header
+* use `#define` guards :arrow_left:
+* separate public and private headers
+* default values belong to `%.h`
+* no argument names in `%.h` (except defaults)
+* **no forward-declarations** (if possible)
+]
+.column.w40[
+## .hcenter[`myclass.h`]
+```C++
+*#ifndef MYCLASS_H
+*#define MYCLASS_H
+
+#include <iostream>
+
+class MyClass
+{
+  public:
+  MyClass(int, int);
+
+  int myFunc(double e = -1.0);
+};
+
+*#endif // MYCLASS_H
+```
+
+## .hcenter[`myclass.cpp`]
+```C++
+#include "myclass.h"
+
+MyClass::MyClass(int a, int b)
+{
+  ...
+}
+
+int MyClass::myFunc(double e)
+{
+  ...
+}
+```
+]
+]
+
+---
+
+# `C++` headers: main rules
+
+.row[
+.column.w55.middle[
+## Rules
+
+* same methods in `%.h` and `%.cpp`
+* one class per `%.h` file
+* `%.h` **first included file** in `%.cpp`
+* no `everything.h` header
+* use `#define` guards
+* separate public and private headers :arrow_left:
+* default values belong to `%.h`
+* no argument names in `%.h` (except defaults)
+* **no forward-declarations** (if possible)
+]
+.column.w40[
+## .hcenter[`myclass.h`]
+```C++
+#ifndef MYCLASS_H
+#define MYCLASS_H
+
+#include <iostream>
+
+class MyClass
+{
+  public:
+  MyClass(int, int);
+
+  int myFunc(double e = -1.0);
+};
+
+#endif // MYCLASS_H
+```
+
+## .hcenter[`myclass.cpp`]
+```C++
+#include "myclass.h"
+
+MyClass::MyClass(int a, int b)
+{
+  ...
+}
+
+int MyClass::myFunc(double e)
+{
+  ...
+}
+```
+]
+]
+
+---
+
+# `C++` headers: main rules
+
+.row[
+.column.w55.middle[
+## Rules
+
+* same methods in `%.h` and `%.cpp`
+* one class per `%.h` file
+* `%.h` **first included file** in `%.cpp`
+* no `everything.h` header
+* use `#define` guards
+* separate public and private headers
+* default values belong to `%.h` :arrow_left:
+* no argument names in `%.h` (except defaults)
+* **no forward-declarations** (if possible)
+]
+.column.w40[
+## .hcenter[`myclass.h`]
+```C++
+#ifndef MYCLASS_H
+#define MYCLASS_H
+
+#include <iostream>
+
+class MyClass
+{
+  public:
+  MyClass(int, int);
+
+* int myFunc(double e = -1.0);
+};
+
+#endif // MYCLASS_H
+```
+
+## .hcenter[`myclass.cpp`]
+```C++
+#include "myclass.h"
+
+MyClass::MyClass(int a, int b)
+{
+  ...
+}
+
+int MyClass::myFunc(double e)
+{
+  ...
+}
+```
+]
+]
+
+---
+
+# `C++` headers: main rules
+
+.row[
+.column.w55.middle[
+## Rules
+
+* same methods in `%.h` and `%.cpp`
+* one class per `%.h` file
+* `%.h` **first included file** in `%.cpp`
+* no `everything.h` header
+* use `#define` guards
+* separate public and private headers
+* default values belong to `%.h`
+* no argument names in `%.h` (except defaults) :arrow_left:
+* **no forward-declarations** (if possible)
+]
+.column.w40[
+## .hcenter[`myclass.h`]
+```C++
+#ifndef MYCLASS_H
+#define MYCLASS_H
+
+#include <iostream>
+
+class MyClass
+{
+  public:
+* MyClass(int, int);
+
+* int myFunc(double e = -1.0);
+};
+
+#endif // MYCLASS_H
+```
+
+## .hcenter[`myclass.cpp`]
+```C++
+#include "myclass.h"
+
+MyClass::MyClass(int a, int b)
+{
+  ...
+}
+
+int MyClass::myFunc(double e)
+{
+  ...
+}
+```
+]
+]
+
+---
+
+# `C++` headers: main rules
+
+.row[
+.column.w55.middle[
+## Rules
+
+* same methods in `%.h` and `%.cpp`
+* one class per `%.h` file
+* `%.h` **first included file** in `%.cpp`
+* no `everything.h` header
+* use `#define` guards
+* separate public and private headers
+* default values belong to `%.h`
+* no argument names in `%.h` (except defaults)
+* **no forward-declarations** (if possible) :arrow_left:
+]
+.column.w40[
+## .hcenter[`myclass.h`]
+```C++
+#ifndef MYCLASS_H
+#define MYCLASS_H
+
+#include <iostream>
+
+class MyClass
+{
+  public:
+  MyClass(int, int);
+
+  int myFunc(double e = -1.0);
+};
+
+#endif // MYCLASS_H
+```
+
+## .hcenter[`myclass.cpp`]
+```C++
+#include "myclass.h"
+
+MyClass::MyClass(int a, int b)
+{
+  ...
+}
+
+int MyClass::myFunc(double e)
+{
+  ...
+}
+```
+]
+]
+
+    </textarea>
+
+    <script src="core/javascript/remark.js"></script>
+    <script src="core/javascript/katex.min.js"></script>
+    <script src="core/javascript/auto-render.min.js"></script>
+    <script src="core/javascript/emojify.js"></script>
+    <script src="core/javascript/mermaid.js"></script>
+    <script src="core/javascript/term.js"></script>
+    <script src="core/javascript/jquery-2.1.1.min.js"></script>
+    <script src="core/javascript/extend-jquery.js"></script>
+    <script src="core/javascript/cinescript.js"></script>
+    <script src="core/javascript/gitgraph.js"></script>
+    <script>
+
+    // === Remark.js initialization ===
+    var slideshow = remark.create({
+      highlightStyle: 'monokai',
+      countIncrementalSlides: false,
+      highlightLines: true
+    });
+
+    // === Mermaid.js initialization ===
+    mermaid.initialize({
+      startOnLoad: false,
+      cloneCssStyles: false,
+      flowchart:{
+        height: 50
+      },
+      sequenceDiagram:{
+        width: 110,
+        height: 30
+      }
+    });
+
+    function initMermaid(s) {
+      var diagrams = document.querySelectorAll('.mermaid');
+      var i;
+      for(i=0;i<diagrams.length;i++){
+        if(diagrams[i].offsetWidth>0){
+          mermaid.init(undefined, diagrams[i]);
+        }
+      }
+    }
+
+    slideshow.on('afterShowSlide', initMermaid);
+    initMermaid(slideshow.getSlides()[slideshow.getCurrentSlideIndex()]);
+
+    
+    // === Emojify.js initialization ===
+    emojify.run();
+
+    // === Cinescript initialization ===
+    $(document).ready(init_cinescripts);
+
+    renderMathInElement(document.body,{delimiters: [{left: "$$", right: "$$", display: true}, {left: "\\(", right: "\\)", display: false}], ignoredTags: [] });
+
+    </script>
+  </body>
+</html>
+
