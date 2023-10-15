@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Présentation du projet d'IPS</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" type="text/css" href="core/fonts/mono.css"> 
+    <link rel="stylesheet" type="text/css" href="core/css/animate.css"> 
+    <link rel="stylesheet" type="text/css" href="core/css/style_core.css"> 
+    <link rel="stylesheet" type="text/css" href="core/css/mermaid.css"> 
+    <link rel="stylesheet" type="text/css" href="core/css/gitgraph.css"> 
+    <link rel="stylesheet" type="text/css" href="core/css/style_ensiie.css"> 
+    <link rel="stylesheet" type="text/css" href="core/css/katex.css"> 
+    <link rel="stylesheet" type="text/css" href="core/css/asciinema-player.css"> 
+
+
+
+  </head>
+  <body>
+    <textarea id="source" readonly>
+class: titlepage
+
+.title[Projet d'IPS : Implémentation des solutions de l'équation de Shrödinger en une dimension
+]
+
+.subtitle[
+Y. Feuvre, L. Darfeuille, A. Ding - ENSIIE - 2022
+]
+
+
+???
+
+Some slide notes.
+
+Some math can be put inline `$a = \sqrt{b^2+c^2}$` or as
+
+`$$a_{0}=\frac{1}{4}b_{1}$$`
+
+Some items:
+* first
+* second
+* third
+
+---
+layout: true
+class: animated fadeIn middle numbers
+
+.footnote[
+Y. Feuvre, L. Darfeuille, A. Ding - ENSIIE - 2022
+]
+
+
+---
+
+class: toc top
+# Sommaire
+
+1. Organisation du projet
+
+  1. Structure des fichiers et du code
+
+  2. Chaine de compilation
+
+
+2. Implémentation des solutions
+
+  1. Les polynômes d'Hermites
+
+  2. Obtention des solutions
+
+  3. Orthonormalité
+
+
+3. Outils 
+
+  1. La documentation
+
+  2. Quelques extraits de git
+
+---
+
+# Organisation du projet
+
+## Structure des fichiers et du code
+
+Arborescence des fichiers :
+
+.alert.tree.hcenter[
+ips_dev_project
+* src
+    * main.cpp
+    * hermite.cpp
+    * constants.cpp
+* headers
+* bin
+* obj
+* test
+    * test_hermite.h
+    * test_constants.h
+* doc
+]
+
+---
+
+# Organisation du projet
+
+## Chaine de compilation :
+
+.hcenter.shadow.w100[![](images/Organigrammes.png)]
+
+---
+# Implémentation des solutions
+
+## Notre manière de procéder
+
+### L'interface utilisateur
+
+```c++
+Hermite::Hermite(int nmax, arma::rowvec vectcoord)
+{
+  arma::mat Ha(nmax, vectcoord.n_cols);
+   
+  Ha.row(0).ones();
+  if(nmax>1)
+  {
+      Ha.row(1) = 2 * vectcoord;
+      for(int n = 2 ; n < nmax ; n++)
+      {
+          Ha.row(n) = 2 * vectcoord % Ha.row(n-1) - 2 * (n-1) * Ha.row(n-2);
+      }
+      
+  }
+
+  this->Hn = Ha;
+}
+```
+
+---
+# Implémentation des solutions
+
+## Notre manière de procéder
+
+### L'interface utilisateur
+
+```c++
+int main(int argc, char const *argv[]) {
+    //System will be used for asking users the number of solutions they want, nsolution will store that answer
+    
+    int system, nsolution;
+    double m, omega, h_bar, cst_calc, cst_expo, cst_herm, cst_fact;
+    arma::rowvec veccoord(24001); // Values for z
+    arma::rowvec hermite_pos(24001); // Values for Hermite
+
+    cout << "What system do you want :" << endl;
+    cout << " 1- easy mode" << endl;
+    cout << " 2- proton" << endl;
+    cout << " 3- electron" << endl;
+    cin >> system;
+
+
+    if (cin.eof() || cin.bad()) 
+    {
+      cerr << "(user canceled or unreconverable error)\n";
+      return 1;
+    }
+    while (cin.fail() || system < 0 || system >3) {
+
+      cin.clear();          
+      cerr << "error: invalid input. Please enter an integer between 1 and 3\n";
+      cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+      cout << "What system do you want :" << endl;
+      cout << " 1- easy mode" << endl;
+      cout << " 2- proton" << endl;
+      cout << " 3- electron" << endl;
+      cin >> system;
+    }
+```
+---
+# Implémentation des solutions
+
+## Notre manière de procéder
+
+### Les constantes de calcul
+
+```c++
+//Here are set the values for m, omega and h_bar, following the user instructions with :
+// m in Kg
+// omega in Hz
+// h_bar in m2.kg/s
+
+if(system == 1)
+{
+   h=0.01;
+   m = constants::m_easy;
+   omega = constants::omega_easy;
+   h_bar = constants::h_bar_easy;
+}
+else if(system == 2)
+{ 
+   h = 1e-10;
+   m = constants::m_proton;
+   omega = constants::omega_proton;
+   h_bar = constants::h_bar_hard;
+}
+else 
+{
+   h = 1e-10;
+   m = constants::m_electron;
+   omega = constants::omega_electron;
+   h_bar = constants::h_bar_hard;
+}
+
+// Definition of constants needed to the calculus of our solutions
+
+cst_calc = pow((m * omega / (arma::datum::pi*h_bar)), 0.25); //Constant appearing in all psi_n
+        
+cst_expo = - m * omega / (2 * h_bar);  //Constant appearing in the exponential in all psi_n
+
+cst_herm = pow(m * omega / h_bar, 0.5); //Constant appearing in Hermite polynomials
+
+cst_fact = 1.;
+
+```
+---
+# Calcul des solutions
+```c++
+    //Setting the hermite_pos vector in order to call the Hermite constructor (with h the difference between two positions)
+    for(int i = 1 ; i < 1201 ; i++)
+    { //Loop in order to caclulate all z
+        veccoord(1200 + i) = veccoord(1200 + i - 1) + h;
+        veccoord(1200 - i) = veccoord(1200 - i + 1) - h;
+    } 
+    hermite_pos = veccoord * cst_herm;
+
+    // Solutions will be in a matrix, with a row by solution, evaluated in every z 
+    
+    arma::mat all_solution(nsolution, 2401);
+    Hermite H(nsolution, hermite_pos);
+    
+    all_solution = H.getHermite();
+
+    arma::mat cstFactMatrix = arma::mat(nsolution,nsolution,arma::fill::zeros);
+    
+    cst_fact = 1; 
+    cstFactMatrix.at(0,0)= cst_fact;
+    for(int i = 1; i < nsolution ; i++)
+    {
+      cst_fact = cst_fact *  1/(sqrt( 2 * i));
+      cstFactMatrix(i,i) = cst_fact;
+    }
+
+    arma::mat cstExpMatrix = arma::mat(nsolution,2401,arma::fill::zeros);
+
+    for( int j =0; j< nsolution; j++) 
+    {
+        cstExpMatrix.row(j) = exp(cst_expo * (veccoord % veccoord));
+        
+    }
+
+    all_solution = cst_calc * cstFactMatrix * all_solution % cstExpMatrix;
+
+    // All solution calculated are in the "all_solution.csv" file. The user is free to plot the solutions themself
+
+    all_solution.save("all_solution.csv", arma::csv_ascii );
+    ```
+
+---
+
+# Nos résultats
+
+## Le mode facile.
+
+.hcenter.shadow.w80[![](images/facile.png)]
+
+---
+
+# Nos résultats
+
+## Pour un électron dans un puit de potentiel.
+
+.hcenter.shadow.w80[![](images/electron.png)]
+
+---
+
+# Nos résultats
+
+## Pour un proton dans un puit de potentiel.
+
+.hcenter.shadow.w80[![](images/proton.png)]
+
+---
+
+
+# Implémentation des solutions
+
+## L'orthonormalité 
+
+Soit :`$$(i,j) \in \mathbb{N}$$`
+
+.column[
+.row.h40[
+.column.w30[
+On doit vérifier que `$$\int_{-\infty}^\infty \psi_i(x) \psi_j(x) dx = \delta_{i,j},$$`]
+
+.column.w60[
+avec `$$\psi_n(x) = \frac{1}{\sqrt{2^n n!}}\left(\frac{m\omega}{\pi\hbar}\right)^{1/4}e^{-\frac{m\omega z^2}{2\hbar}}H_n\left(\sqrt{\frac{m\omega}{\hbar}} . x\right).$$`
+]]
+
+.row.h100[
+En réutilisant l'expression des fonctions il vient alors : 
+`$$\forall x \in \mathbb{R}, \psi_i(x) \psi_j(x) = \frac{C}{\sqrt{\pi2^{i+j}.i!.j!}}.e^{-Cz^2}.H_i(Cz).H_j(Cz) ; avec C = \sqrt{\frac{m\omega}{\hbar}}$$`
+]
+
+]
+---
+
+# Implémentation des solutions
+
+
+On pose le changement de variable t = Cz et on obtient alors :
+
+`$$\int_{-\infty}^\infty \psi_i(x) \psi_j(x) dx = \int_{-\infty}^\infty \frac{1}{\sqrt{\pi2^{i+j}.i!.j!}}.e^{-t^2}H_i(t)H_j(t)dt$$`
+
+On reconnait alors une fonction facilement intégrable grâce à la quadrature de Gauss, car le produit de deux polynômes reste un polynôme. On réalise le test suivant :
+```c++
+//Initializing Hermite's polynome with the position from constants::pos 
+arma::mat hermite_n = Hermite(n,constants::pos).getHermite();
+//Defining ConstantMatrix used to calculate the solutions
+arma::mat constantMatrix = arma::mat(n,n,arma::fill::zeros);
+
+double cst_fact = 1; 
+constantMatrix.at(0,0)= cst_fact;
+for(int i = 1; i < n ; i++)
+{
+  cst_fact = cst_fact *  1/(sqrt( 2 * i));
+  constantMatrix(i,i) = cst_fact;
+}
+
+hermite_n = constantMatrix * hermite_n;
+double integralApproximation ;
+for (int i = 0; i < n; i++) 
+{
+  for (int j = 0; j < n; j++) 
+  {
+    integralApproximation = (arma::accu((hermite_n.row(i) % hermite_n.row(j)) % constants::weight)) * (1/(sqrt(arma::datum::pi)));
+    if(i==j) 
+    {
+      TS_ASSERT_DELTA(integralApproximation,1,epsilon);
+    }
+    else 
+    {
+      TS_ASSERT_DELTA(integralApproximation,0,epsilon);
+    }}}
+```
+---
+
+# Documentation
+
+.hcenter.shadow.w90[![](images/doc.png)]
+
+---
+# Quelques extraits de Git
+
+##Extrait de l'historique des commits
+
+
+.hcenter.shadow.w90[![](images/git.png)]
+
+---
+# Quelques extraits de Git
+
+##Extrait de l'historique des commits
+
+
+.hcenter.shadow.w90[![](images/git2.png)]
+
+---
+
+class: hcenter, middle
+# Conclusion
+
+** Conclusion**
+
+ </textarea>
+
+    <script src="core/javascript/remark.js"></script>
+    <script src="core/javascript/katex.min.js"></script>
+    <script src="core/javascript/auto-render.min.js"></script>
+    <script src="core/javascript/emojify.js"></script>
+    <script src="core/javascript/mermaid.js"></script>
+    <script src="core/javascript/jquery-2.1.1.min.js"></script>
+    <script src="core/javascript/extend-jquery.js"></script>
+    <script src="core/javascript/gitgraph.js"></script>
+    <script src="core/javascript/plotly.js"></script>
+    <script src="core/javascript/asciinema-player.js"></script>
+    <script src="core/javascript/bokeh-2.2.1.min.js"></script>
+    <script src="core/javascript/bokeh-widgets-2.2.1.min.js"></script>
+    <script src="core/javascript/bokeh-tables-2.2.1.min.js"></script>
+    <script src="core/javascript/bokeh-api-2.2.1.min.js"></script>
+
+    <script>
+
+    // === Remark.js initialization ===
+    var slideshow = remark.create(
+    {
+      highlightStyle: 'monokai',
+      countIncrementalSlides: false,
+      highlightLines: false
+    });
+
+    // === Mermaid.js initialization ===
+    mermaid.initialize({
+      startOnLoad: false,
+      cloneCssStyles: false,
+      flowchart:{
+        height: 50
+      },
+      sequenceDiagram:{
+        width: 110,
+        height: 30
+      }
+    });
+
+    function initMermaid(s) {
+      var diagrams = document.querySelectorAll('.mermaid');
+      var i;
+      for(i=0;i<diagrams.length;i++){
+        if(diagrams[i].offsetWidth>0){
+          mermaid.init(undefined, diagrams[i]);
+        }
+      }
+    }
+
+    slideshow.on('afterShowSlide', initMermaid);
+    initMermaid(slideshow.getSlides()[slideshow.getCurrentSlideIndex()]);
+
+    
+    // === Emojify.js initialization ===
+    emojify.run();
+
+    // KaTeX
+    renderMathInElement(document.body,{delimiters: [{left: "$$", right: "$$", display: true}, {left: "$", right: "$", display: false}], ignoredTags: ["script", "noscript", "style", "textarea", "pre"] });
+
+    
+    // ===== END =====
+    
+
+    // ===== END =====
+
+    </script>
+    <script src="gitgraphs.js" type="text/javascript"></script>
+  </body>
+</html>
+
